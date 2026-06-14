@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alfresco ACS 7.x — Instalación ZIP</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-deep:    #080d1a;
+    --bg-card:    #0e1629;
+    --bg-panel:   #131f36;
+    --accent:     #2563eb;
+    --accent-2:   #38bdf8;
+    --accent-glow:#1d4ed8;
+    --green:      #22d3a0;
+    --amber:      #fbbf24;
+    --text-head:  #f0f6ff;
+    --text-body:  #94aabf;
+    --text-dim:   #4a6480;
+    --border:     rgba(56,189,248,0.13);
+    --grid:       rgba(37,99,235,0.06);
+  }
+
+  html, body { height: 100%; font-family: 'Inter', sans-serif; background: var(--bg-deep); color: var(--text-body); overflow: hidden; }
+
+  /* ── SLIDE CONTAINER ── */
+  #deck { width: 100vw; height: 100vh; position: relative; }
+
+  .slide {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    padding: 52px 72px 44px;
+    opacity: 0; pointer-events: none;
+    transition: opacity .45s ease, transform .45s ease;
+    transform: translateX(40px);
+    overflow: hidden;
+  }
+  .slide.active   { opacity: 1; pointer-events: all; transform: translateX(0); }
+  .slide.prev     { opacity: 0; transform: translateX(-40px); }
+
+  /* grid background */
+  .slide::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+  }
+
+  /* accent bar left */
+  .slide::after {
+    content: '';
+    position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+    background: linear-gradient(180deg, var(--accent), var(--accent-2));
+  }
+
+  /* ── HEADER AREA ── */
+  .slide-header { margin-bottom: 36px; position: relative; z-index: 1; }
+
+  .phase-tag {
+    display: inline-block;
+    font-size: 10px; font-weight: 700; letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--accent-2);
+    border: 1px solid var(--border);
+    background: rgba(37,99,235,.12);
+    padding: 4px 12px; border-radius: 4px;
+    margin-bottom: 14px;
+  }
+
+  .slide-title {
+    font-size: clamp(26px, 3.4vw, 44px);
+    font-weight: 800; line-height: 1.12;
+    color: var(--text-head);
+    letter-spacing: -.02em;
+  }
+  .slide-title span { color: var(--accent-2); }
+
+  .title-rule {
+    margin-top: 16px; height: 2px; width: 80px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+    border-radius: 2px;
+  }
+
+  /* ── BULLETS ── */
+  .bullets { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 18px; }
+
+  .bullet {
+    display: flex; align-items: flex-start; gap: 18px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 24px;
+    transition: border-color .2s;
+  }
+  .bullet:hover { border-color: rgba(56,189,248,.35); }
+
+  .bullet-num {
+    flex-shrink: 0;
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: #fff;
+  }
+
+  .bullet-text {
+    font-size: clamp(13px, 1.4vw, 16px);
+    line-height: 1.55;
+    color: var(--text-body);
+  }
+  .bullet-text strong { color: var(--text-head); font-weight: 600; }
+  .bullet-text code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .85em;
+    color: var(--accent-2);
+    background: rgba(56,189,248,.08);
+    padding: 1px 6px; border-radius: 4px;
+  }
+
+  /* ── COVER SLIDE ── */
+  .slide-cover {
+    align-items: flex-start; justify-content: center;
+  }
+  .slide-cover::after { width: 6px; background: linear-gradient(180deg, var(--accent), var(--green)); }
+
+  .cover-eyebrow {
+    font-size: 11px; letter-spacing: .18em; text-transform: uppercase;
+    color: var(--accent-2); margin-bottom: 20px;
+  }
+  .cover-title {
+    font-size: clamp(36px, 5vw, 68px);
+    font-weight: 800; line-height: 1.05;
+    color: var(--text-head); letter-spacing: -.03em;
+    margin-bottom: 10px;
+  }
+  .cover-title .hl { color: var(--accent-2); }
+  .cover-sub {
+    font-size: clamp(16px, 2vw, 22px); font-weight: 300;
+    color: var(--text-body); margin-bottom: 48px;
+  }
+
+  .cover-chips { display: flex; gap: 12px; flex-wrap: wrap; }
+  .chip {
+    font-size: 12px; font-weight: 600;
+    padding: 6px 16px; border-radius: 20px;
+    border: 1px solid var(--border);
+    background: rgba(37,99,235,.1);
+    color: var(--accent-2);
+  }
+
+  .cover-glow {
+    position: absolute; right: -100px; top: 50%; transform: translateY(-50%);
+    width: 600px; height: 600px;
+    background: radial-gradient(circle at center, rgba(37,99,235,.18) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  /* ── FOOTER / CONTROLS ── */
+  #footer {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    height: 56px;
+    background: rgba(8,13,26,.92);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center;
+    padding: 0 40px; gap: 20px; z-index: 100;
+  }
+
+  .footer-logo {
+    font-size: 13px; font-weight: 700; color: var(--accent-2);
+    letter-spacing: .04em; margin-right: auto;
+  }
+
+  .progress-track {
+    flex: 1; max-width: 260px;
+    height: 3px; background: var(--bg-panel); border-radius: 2px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    transition: width .35s ease;
+  }
+
+  #slide-counter { font-size: 12px; color: var(--text-dim); min-width: 52px; text-align: right; }
+
+  .nav-btn {
+    width: 36px; height: 36px; border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg-panel);
+    color: var(--text-body);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 16px; transition: background .15s, border-color .15s, color .15s;
+  }
+  .nav-btn:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .nav-btn:disabled { opacity: .3; cursor: not-allowed; }
+
+  /* ── THUMBNAIL DOTS ── */
+  #dots { display: flex; gap: 6px; align-items: center; }
+  .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--text-dim); cursor: pointer;
+    transition: background .2s, transform .2s;
+  }
+  .dot.active { background: var(--accent-2); transform: scale(1.4); }
+
+  /* ── PHASE MARKER ── */
+  .phase-marker {
+    position: absolute; top: 52px; right: 72px;
+    font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--text-dim); font-weight: 600;
+    display: flex; align-items: center; gap: 8px;
+    z-index: 2;
+  }
+  .phase-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+
+  /* ── SLIDE 3 ARCH ── */
+  .arch-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 14px; position: relative; z-index: 1;
+  }
+  .arch-card {
+    background: var(--bg-panel); border: 1px solid var(--border);
+    border-radius: 10px; padding: 18px 20px;
+  }
+  .arch-card-label {
+    font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--accent-2); margin-bottom: 8px;
+  }
+  .arch-card-title {
+    font-size: 15px; font-weight: 700; color: var(--text-head); margin-bottom: 6px;
+  }
+  .arch-card-desc { font-size: 13px; color: var(--text-body); line-height: 1.5; }
+
+  /* ── TABLE SLIDE ── */
+  .info-table { width: 100%; border-collapse: collapse; position: relative; z-index: 1; }
+  .info-table th {
+    text-align: left; font-size: 11px; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--accent-2);
+    padding: 10px 16px; border-bottom: 1px solid var(--border);
+  }
+  .info-table td {
+    padding: 12px 16px; font-size: 14px; color: var(--text-body);
+    border-bottom: 1px solid rgba(56,189,248,.05);
+  }
+  .info-table td:first-child { color: var(--text-head); font-weight: 600; }
+  .info-table tr:hover td { background: rgba(37,99,235,.05); }
+  .badge {
+    display: inline-block; font-size: 11px; font-weight: 600;
+    padding: 2px 10px; border-radius: 12px;
+  }
+  .badge-blue  { background: rgba(37,99,235,.2); color: #60a5fa; }
+  .badge-green { background: rgba(34,211,160,.15); color: var(--green); }
+  .badge-amber { background: rgba(251,191,36,.15); color: var(--amber); }
+
+  /* ── KEYBOARD HINT ── */
+  #key-hint {
+    position: fixed; top: 18px; right: 24px;
+    font-size: 11px; color: var(--text-dim);
+    display: flex; gap: 8px; align-items: center; z-index: 100;
+  }
+  .kbkey {
+    border: 1px solid var(--border); border-radius: 4px;
+    padding: 2px 7px; font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; color: var(--text-dim);
+    background: var(--bg-panel);
+  }
+</style>
+</head>
+<body>
+
+<div id="key-hint">
+  <span class="kbkey">←</span><span class="kbkey">→</span>
+  <span style="margin-left:4px">navegar</span>
+</div>
+
+<div id="deck">
+
+<!-- ══════════════ SLIDE 1 — COVER ══════════════ -->
+<div class="slide slide-cover active" data-phase="">
+  <div class="cover-glow"></div>
+  <p class="cover-eyebrow">Hyland University · Guía Técnica de Despliegue</p>
+  <h1 class="cover-title">Alfresco <span class="hl">ACS 7.x</span><br>Instalación ZIP</h1>
+  <p class="cover-sub">Despliegue no-containerizado — Distribution ZIP</p>
+  <div class="cover-chips">
+    <span class="chip">ACS 6.2 / 7.x</span>
+    <span class="chip">OpenJDK 11</span>
+    <span class="chip">Apache Tomcat 8.5</span>
+    <span class="chip">PostgreSQL 11</span>
+    <span class="chip">ActiveMQ 5.16</span>
+    <span class="chip">Solr 6</span>
+  </div>
+</div>
+
+<!-- ══════════════ SLIDE 2 ══════════════ -->
+<div class="slide" data-phase="Fase 1 · Introducción">
+  <div class="phase-marker"><span class="phase-dot"></span>Fase 1 · Introducción</div>
+  <div class="slide-header">
+    <span class="phase-tag">Decisión arquitectónica</span>
+    <h2 class="slide-title">¿Por qué <span>ZIP</span> vs Docker?</h2>
+    <div class="title-rule"></div>
+  </div>
+  <div class="bullets">
+    <div class="bullet"><div class="bullet-num">1</div><div class="bullet-text"><strong>Control total</strong>: separación explícita de binarios, configuración, datos y logs en rutas independientes del sistema de archivos Linux (FHS).</div></div>
+    <div class="bullet"><div class="bullet-num">2</div><div class="bullet-text"><strong>Infraestructura flexible</strong>: se despliega sobre bare-metal, VM (VMware / VirtualBox) o Cloud (AWS, Azure) sin dependencia de un runtime de contenedores.</div></div>
+    <div class="bullet"><div class="bullet-num">3</div><div class="bullet-text"><strong>Docker: solo para lab/demo</strong>: útil para entrenamiento y pruebas rápidas; <em>no recomendado</em> para entornos persistentes de producción.</div></div>
+    <div class="bullet"><div class="bullet-num">4</div><div class="bullet-text"><strong>Promotion path</strong>: la estructura ZIP facilita promover el mismo despliegue entre entornos — <code>Dev → QA → Prod</code> — con cambios mínimos en <code>setenv.sh</code>.</div></div>
+  </div>
+</div>
+
+<!-- ══════════════ SLIDE 3 ══════════════ -->
+<div class="slide" data-phase="Fase 1 · Introducción">
+  <div class="phase-marker"><span class="phase-dot"></span>Fase 1 · Introducción</div>
+  <div class="slide-header">
+    <span class="phase-tag">Visión general</span>
+    <h2 class="slide-title">Arquitectura General de <span>Alfresco ACS</span></h2>
+    <div class="title-rule"></div>
+  </div>
+  <div class="arch-grid">
+    <div class="arch-card">
+      <div class="arch-card-label">Core Platform</div>
+      <div class="arch-card-title">Repository + Share</div>
+      <div class="arch-card-desc"><code>alfresco.war</code> (Repository) y <code>share.war</code> (UI) desplegados sobre <strong>Apache Tomcat 8.5</strong> como servidor JEE.</div>
+    </div>
+    <div class="arch-card">
+      <div class="arch-card-label">Mensajería</div>
+      <div class="arch-card-title">Apache ActiveMQ</div>
+      <div class="arch-card-desc">Broker de mensajería <strong>obligatorio desde ACS v6.0</strong>. Gestiona eventos internos entre el repositorio y los microservicios.</div>
+    </div>
+    <div class="arch-card">
+      <div class="arch-card-label">Persistencia</div>
+      <div class="arch-card-title">PostgreSQL 11</div>
+      <div class="arch-card-desc">Base de datos relacional para <strong>metadata de contenido</strong>. ACS crea el esquema automáticamente en el primer arranque.</div>
+    </div>
+    <div class="arch-card">
+      <div class="arch-card-label">Servicios satélite</div>
+      <div class="arch-card-title">Search · Transform · Sync</div>
+      <div class="arch-card-desc"><strong>Search Services</strong> (Solr 6), <strong>Transform Service</strong> (ATS microservicios) y <strong>Sync Service</strong> como procesos independientes.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ SLIDE 4 ══════════════ -->
+<div class="slide" data-phase="Fase 1 · Introducción">
+  <div class="phase-marker"><span class="phase-dot"></span>Fase 1 · Introducción</div>
+  <div class="slide-header">
+    <span class="phase-tag">FHS Layout</span>
+    <h2 class="slide-title">Estructura de <span>Directorios</span></h2>
+    <div class="title-rule"></div>
+  </div>
+  <table class="info-table">
+    <thead><tr><th>Ruta</th><th>Propósito</th><th>Tipo</th></tr></thead>
+    <tbody>
+      <tr><td><code>/opt/alfresco</code></td><td>Binarios de todos los servicios y dependencias</td><td><span class="badge badge-blue">Binarios</span></td></tr>
+      <tr><td><code>/etc/opt/alfresco</code></td><td>Configuración centralizada: <code>setenv.sh</code>, <code>alfresco-global.properties</code>, <code>solr.in.sh</code></td><td><span class="badge badge-amber">Config</span></td></tr>
+      <tr><td><code>/var/opt/alfresco</code></td><td>Datos persistentes: content store, keystore, datos de BD</td><td><span class="badge badge-green">Datos</span></td></tr>
+      <tr><td><code>/var/log/alfresco</code></td><td>Logs unificados: <code>alfresco.log</code>, <code>catalina.out</code>, <code>solr.log</code>, ATS logs</td><td><span class="badge badge-blue">Logs</span></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ══════════════ SLIDE 5 ══════════════ -->
+<div class="slide" data-phase="Fase 2 · Prerrequisitos">
+  <div class="phase-marker"><span class="phase-dot"></span>Fase 2 · Prerrequisitos</div>
+  <div class="slide-header">
+    <span class="phase-tag">Infraestructura</span>
+    <h2 class="slide-title">Requisitos de <span>Hardware</span></h2>
+    <div class="title-rule"></div>
+  </div>
+  <div class="bullets">
+    <div class="bullet"><div class="bullet-num">1</div><div class="bullet-text"><strong>CPU</strong>: mínimo 4 cores para entorno de laboratorio; se recomiendan <strong>8+ cores</strong> en producción para soportar Tomcat, Solr y ATS simultáneamente.</div></div>
+    <div class="bullet"><div class="bullet-num">2</div><div class="bullet-text"><strong>RAM</strong>: <strong>mínimo 6 GB disponibles</strong> (requerimiento del curso); se recomiendan 16 GB+ en producción — Tomcat heap 2 GB, Solr heap 2 GB, OS + ATS el resto.</div></div>
+    <div class="bullet"><div class="bullet-num">3</div><div class="bullet-text"><strong>Disco</strong>: <strong>mínimo 15 GB libres</strong>; usar SSD para <code>/var/opt/alfresco</code> (content store) y la BD. El content store crece con los documentos almacenados.</div></div>
+    <div class="bullet"><div class="bullet-num">4</div><div class="bullet-text"><strong>Red</strong>: puertos abiertos <code>8080</code> (ACS/Share), <code>8161</code> (ActiveMQ console), <code>8983</code> (Solr), <code>8090/8095/8099</code> (ATS components). Acceso a internet para descargas.</div></div>
+  </div>
+</div>
+
+<!-- ══════════════ SLIDE 6 ══════════════ -->
+<div class="slide" data-phase="Fase 2 · Prerrequisitos">
+  <div class="phase-marker"><span class="phase-dot"></span>Fase 2 · Prerrequisitos</div>
+  <div class="slide-header">
+    <span class="phase-tag">Runtime</span>
+    <h2 class="slide-title">Java JDK y <span>Apache Tomcat</span></h2>
+    <div class="title-rule"></div>
+  </div>
+  <div class="bullets">
+    <div class="bullet"><div class="bullet-num">1</div><div class="bullet-text"><strong>OpenJDK 11</strong>: instalación manual desde <code>tar.gz</code> en <code>/opt/jdk-11</code> — sin usar el package manager para controlar la versión exacta. Definir <code>JAVA_HOME</code> en <code>setenv.sh</code>.</div></div>
+    <div class="bullet"><div class="bullet-num">2</div><div class="bullet-text"><strong>Apache Tomcat 8.5.x</strong>: único application server certificado desde ACS v6.0. Extraer en <code>/opt/apache-tomcat-{version}</code>.</div></div>
+    <div class="bullet"><div class="bullet-num">3</div><div class="bullet-text"><strong>Separación Catalina</strong>: <code>CATALINA_HOME</code> = directorio de binarios Tomcat; <code>CATALINA_BASE</code> = <code>/etc/opt/alfresco/tomcat</code> (config + webapps). Esto aísla la configuración de upgrades.</div></div>
+    <div class="bullet"><div class="bullet-num">4</div><div class="bullet-text"><strong>Script tomcat.sh</strong>: script propio en <code>/opt/alfresco/tomcat.sh</code> que fuente <code>setenv.sh</code> e invoca <code>catalina.sh</code>. Declarado como servicio systemd (<code>tomcat.service</code>).</div></div>
+  </div>
+</div>
+
+<!-- ══════════════ SLIDE 7 ══════════════ -->
+<div class="slide" data-phase="Fase 2 · Prerrequisitos">
+  <div class="phase-marker"><span class="phase-dot"></span>Fase 2 · Prerrequisitos</div>
+  <div class="slide-header">
+    <span class="phase-tag">Transformaciones</span>
+    <h2 class="slide-title">Software de <span>Soporte</span></h2>
+    <div class="title-rule"></div>
+  </div>
+  <div class="bullets">
+    <div class="bullet"><div class="bullet-num">1</div><div class="bullet-text"><strong>LibreOffice 6.3.x</strong>: convierte documentos Office a PDF vía JodConverter. Instalar con package manager; ruta exportada como <code>LIBREOFFICE_HOME</code> en <code>setenv.sh</code>.</div></div>
+    <div class="bullet"><div class="bullet-num">2</div><div class="bullet-text"><strong>ImageMagick 6.9.x / 7.x</strong>: conversión y escalado de imágenes. Exportar <code>IMAGEMAGICK_HOME</code>, <code>IMAGEMAGICK_EXE</code> (<code>convert</code> en v6, <code>magick</code> en v7), y rutas de coders/config.</div></div>
+    <div class="bullet"><div class="bullet-num">3</div><div class="bullet-text"><strong>Alfresco PDF Renderer 1.1</strong>: convierte páginas de PDF a imágenes para preview. Incluido dentro del Distribution ZIP de ACS en la carpeta <code>alfresco-pdf-renderer/</code>.</div></div>
+    <div class="bullet"><div class="bullet-num">4</div><div class="bullet-text">Todas las rutas se centralizan en <code>/etc/opt/alfresco/setenv.sh</code> — el archivo de variables de entorno único de todo el stack, que se carga en cada script de inicio.</div></div>
+  </div>
+</div>
+
+<!-- ══════════════ SLIDE 8 ══════════════ -->
+<div class="slide" data-phase="Fase 3 · Base de Datos">
+  <div class="phase-marker"><span class="phase-dot"></span>Fase 3 · Base de Datos y Mensajería</div>
+  <div class="slide-header">
+    <span class="phase-tag">Persistencia</span>
+    <h2 class="slide-title">Configuración de <span>PostgreSQL</span></h2>
+    <div class="title-rule"></div>
+  </div>
+  <div class="bullets">
+    <div class="bullet"><div class="bullet-num">1</div><div class="bullet-text"><strong>Instalación</strong>: PostgreSQL 11 via repositorio oficial APT/YUM. Habilitar y arrancar con <code>systemctl enable/start postgresql</code> antes de instalar ACS.</div></div>
+    <div class="bullet"><div class="bullet-num">2</div><div class="bullet-text"><strong>Usuario y base de datos</strong>: <code>sudo -u postgres createuser -P alfresco</code> y <code>createdb alfresco</code>. ACS no requiere creación manual de tablas — las genera en el primer inicio.</div></div>
+    <div class="bullet"><div class="bullet-num">3</div><div class="bullet-text"><strong>Autenticación RPM</strong>: en distribuciones RPM, cambiar método en <code>pg_hba.conf</code> de <code>peer/ident</code> a <code>trust</code> para habilitar conexión JDBC desde ACS.</div></div>
+    <div class="bullet"><div class="bullet-num">4</div><div class="bullet-text"><strong>Driver JDBC</strong>: el conector PostgreSQL ya está incluido en el Distribution ZIP de ACS. Configurar <code>db.url</code>, <code>db.username</code> y <code>db.password</code> en <code>alfresco-global.properties</code>.</div></div>
+  </div>
+</div>
+
+<!-- ══════════════ SLIDE 9 ══════════════ -->
+<div class="slide" data-phase="Fase 3 · Mensajería">
+  <div class="phase-marker"><span class="phase-dot"></span>Fase 3 · Base de Datos y Mensajería</div>
+  <div class="slide-header">
+    <span class="phase-tag">Crítico desde ACS v6.0</span>
+    <h2 class="slide-title">Apache <span>ActiveMQ</span></h2>
+    <div class="title-rule"></div>
+  </div>
+  <div class="bullets">
+    <div class="bullet"><div class="bullet-num">1</div><div class="bullet-text"><strong>Obligatorio desde ACS v6.0</strong>: el broker de mensajería es un prerrequisito estricto. Sin él, el repositorio no arranca correctamente ni los eventos internos se propagan.</div></div>
+    <div class="bullet"><div class="bullet-num">2</div><div class="bullet-text"><strong>Versión certificada</strong>: Apache ActiveMQ <code>5.16.x</code>. Instalar desde <code>tar.gz</code> en <code>/opt/apache-activemq-{version}</code>. Configurar <code>ACTIVEMQ_BASE</code> y <code>ACTIVEMQ_DATA</code> en <code>setenv.sh</code>.</div></div>
+    <div class="bullet"><div class="bullet-num">3</div><div class="bullet-text"><strong>systemd service</strong>: declarar <code>activemq.service</code> en <code>/etc/systemd/system/</code>. El servicio <code>tomcat.service</code> debe declarar <code>Requires=activemq.service</code> para asegurar el orden de inicio.</div></div>
+    <div class="bullet"><div class="bullet-num">4</div><div class="bullet-text"><strong>Verificación</strong>: consola web en <code>http://localhost:8161</code> (credenciales: <code>admin/admin</code>). Confirmar que el broker está en estado <em>running</em> antes de arrancar Tomcat.</div></div>
+  </div>
+</div>
+
+<!-- ══════════════ SLIDE 10 ══════════════ -->
+<div class="slide" data-phase="Fase 4 · Despliegue Core">
+  <div class="phase-marker"><span class="phase-dot"></span>Fase 4 · Despliegue Core</div>
+  <div class="slide-header">
+    <span class="phase-tag">Distribution ZIP</span>
+    <h2 class="slide-title">Instalación del <span>Repository</span></h2>
+    <div class="title-rule"></div>
+  </div>
+  <div class="bullets">
+    <div class="bullet"><div class="bullet-num">1</div><div class="bullet-text"><strong>Descarga</strong>: obtener <code>alfresco-content-services-distribution-{version}.zip</code> desde el Alfresco Support Portal o Maven Enterprise Repository (credenciales requeridas).</div></div>
+    <div class="bullet"><div class="bullet-num">2</div><div class="bullet-text"><strong>Extracción</strong>: <code>unzip -d content-services-{version}</code> en <code>/opt/alfresco</code>. El ZIP contiene <code>alfresco.war</code>, <code>share.war</code>, <code>ROOT.war</code>, <code>_vti_bin.war</code>, drivers JDBC y herramienta <code>alfresco-mmt.jar</code>.</div></div>
+    <div class="bullet"><div class="bullet-num">3</div><div class="bullet-text"><strong>Licencia</strong>: copiar <code>Alfresco.lic</code> en <code>/var/opt/alfresco/content-services/license/</code>. Licencias por <code>MAJOR.MINOR</code> version; deben coincidir con la versión instalada.</div></div>
+    <div class="bullet"><div class="bullet-num">4</div><div class="bullet-text"><strong>Módulos AMP</strong>: ejecutar <code>apply_amps.sh</code> para instalar <code>alfresco-share-services.amp</code> (integra Share con el repositorio). Script usa <code>alfresco-mmt.jar install</code> y limpia caché de Tomcat.</div></div>
+  </div>
+</div>
+
+<!-- ══════════════ SLIDE 11 ══════════════ -->
+<div class="slide" data-phase="Fase 4 · Despliegue Core">
+  <div class="phase-marker"><span class="phase-dot"></span>Fase 4 · Despliegue Core</div>
+  <div class="slide-header">
+    <span class="phase-tag">Configuración central</span>
+    <h2 class="slide-title"><span>alfresco-global</span>.properties</h2>
+    <div class="title-rule"></div>
+  </div>
+  <div class="bullets">
+    <div class="bullet"><div class="bullet-num">1</div><div class="bullet-text"><strong>Ruta</strong>: <code>/etc/opt/alfresco/content-services/classpath/alfresco-global.properties</code>. Es el archivo de configuración principal del repositorio.</div></div>
+    <div class="bullet"><div class="bullet-num">2</div><div class="bullet-text"><strong>Rutas esenciales</strong>: <code>dir.root</code> (content store), <code>dir.keystore</code> (keystores SSL), <code>dir.license.external</code> (licencia ACS). Todas deben apuntar a <code>/var/opt/alfresco/...</code>.</div></div>
+    <div class="bullet"><div class="bullet-num">3</div><div class="bullet-text"><strong>Conexión BD</strong>: <code>db.driver=org.postgresql.Driver</code>, <code>db.url=jdbc:postgresql://localhost/alfresco</code>, <code>db.username=alfresco</code>, <code>db.password=alfresco1</code>.</div></div>
+    <div class="bullet"><div class="bullet-num">4</div><div class="bullet-text"><strong>Transformaciones</strong>: <code>local.transform.service.enabled=true</code> (ATS) y <code>legacy.transform.service.enabled=false</code> para usar el Transform Service moderno en lugar del LTS embebido.</div></div>
+  </div>
+</div>
+
+<!-- ══════════════ SLIDE 12 ══════════════ -->
+<div class="slide" data-phase="Fase 4 · Despliegue Core">
+  <div class="phase-marker"><span class="phase-dot"></span>Fase 4 · Despliegue Core</div>
+  <div class="slide-header">
+    <span class="phase-tag">UI Colaborativa</span>
+    <h2 class="slide-title">Despliegue de la <span>Interfaz: share.war</span></h2>
+    <div class="title-rule"></div>
+  </div>
+  <div class="bullets">
+    <div class="bullet"><div class="bullet-num">1</div><div class="bullet-text"><strong>share.war</strong>: proporciona la interfaz colaborativa clásica de Alfresco Share. Se despliega junto a <code>alfresco.war</code> dentro del mismo Tomcat en <code>CATALINA_BASE/webapps</code>.</div></div>
+    <div class="bullet"><div class="bullet-num">2</div><div class="bullet-text"><strong>Módulo requerido</strong>: <code>alfresco-share-services.amp</code> debe instalarse en <code>alfresco.war</code> via <code>apply_amps.sh</code>. Sin él, Share no puede comunicarse con el repositorio.</div></div>
+    <div class="bullet"><div class="bullet-num">3</div><div class="bullet-text"><strong>Configuración</strong>: <code>share-config-custom.xml</code> en classpath de Alfresco. Define endpoints al repositorio y personalizaciones de la UI. Copiado en la carpeta de extensiones web.</div></div>
+    <div class="bullet"><div class="bullet-num">4</div><div class="bullet-text"><strong>Digital Workspace</strong>: UI moderna alternativa basada en Angular (<code>digital-workspace.war</code>). Disponible en <code>http://localhost:8080/digital-workspace</code> como complemento o reemplazo de Share.</div></div>
+  </div>
+</div>
+
+<!-- ══════════════ SLIDE 13 ══════════════ -->
+<div class="slide" data-phase="Fase 5 · Búsqueda">
+  <div class="phase-marker"><span class="phase-dot"></span>Fase 5 · Búsqueda y Transformación</div>
+  <div class="slide-header">
+    <span class="phase-tag">Full-text indexing</span>
+    <h2 class="slide-title">Alfresco <span>Search Services</span> (Solr): Conceptos</h2>
+    <div class="title-rule"></div>
+  </div>
+  <div class="bullets">
+    <div class="bullet"><div class="bullet-num">1</div><div class="bullet-text"><strong>Basado en Apache Solr 6</strong>: indexa metadata de nodos y contenido full-text de documentos. Opcional pero <em>fuertemente recomendado</em> para búsqueda robusta y escalable en producción.</div></div>
+    <div class="bullet"><div class="bullet-num">2</div><div class="bullet-text"><strong>Sin Search Services</strong>: ACS usa solo la base de datos relacional para búsquedas, lo que limita las capacidades de full-text y penaliza el rendimiento con volúmenes grandes.</div></div>
+    <div class="bullet"><div class="bullet-num">3</div><div class="bullet-text"><strong>Cores Solr</strong>: core <code>alfresco</code> indexa el workspace activo; core <code>archive</code> indexa la papelera (opcional). Se crean a partir de la plantilla <code>rerank</code> incluida en el ZIP.</div></div>
+    <div class="bullet"><div class="bullet-num">4</div><div class="bullet-text"><strong>Verificación</strong>: consola Solr en <code>http://localhost:8983/solr</code>. El campo <code>NumDocs</code> debe superar <strong>500</strong> incluso en un repositorio recién creado (nodos del sistema).</div></div>
+  </div>
+</div>
+
+<!-- ══════════════ SLIDE 14 ══════════════ -->
+<div class="slide" data-phase="Fase 5 · Búsqueda">
+  <div class="phase-marker"><span class="phase-dot"></span>Fase 5 · Búsqueda y Transformación</div>
+  <div class="slide-header">
+    <span class="phase-tag">Integración</span>
+    <h2 class="slide-title">Conexión de <span>Solr</span> con el Repositorio</h2>
+    <div class="title-rule"></div>
+  </div>
+  <div class="bullets">
+    <div class="bullet"><div class="bullet-num">1</div><div class="bullet-text"><strong>Activar subsistema</strong>: agregar en <code>alfresco-global.properties</code> → <code>index.subsystem.name=solr6</code>. Por defecto el ZIP usa la BD; este cambio redirige las búsquedas a Solr.</div></div>
+    <div class="bullet"><div class="bullet-num">2</div><div class="bullet-text"><strong>SSL simplificado (lab)</strong>: <code>solr.secureComms=none</code> en <code>alfresco-global.properties</code> y <code>alfresco.secureComms=none</code> en <code>solrcore.properties</code> del template <code>rerank</code>.</div></div>
+    <div class="bullet"><div class="bullet-num">3</div><div class="bullet-text"><strong>Datos persistentes</strong>: configurar <code>data.dir.root=/var/opt/alfresco/search-services</code> en la plantilla de core para separar índices de los binarios de Solr.</div></div>
+    <div class="bullet"><div class="bullet-num">4</div><div class="bullet-text"><strong>systemd</strong>: <code>alfresco-search.service</code> con <code>PartOf=alfresco-content.service</code> — Solr se detiene cuando ACS se detiene. El arranque se gestiona vía <code>Requires=</code> en <code>alfresco-content.service</code>.</div></div>
+  </div>
+</div>
+
+<!-- ══════════════ SLIDE 15 ══════════════ -->
+<div class="slide" data-phase="Fase 5 · Transformación">
+  <div class="phase-marker"><span class="phase-dot"></span>Fase 5 · Búsqueda y Transformación</div>
+  <div class="slide-header">
+    <span class="phase-tag">ATS vs LTS</span>
+    <h2 class="slide-title">Alfresco <span>Transform Service</span></h2>
+    <div class="title-rule"></div>
+  </div>
+  <table class="info-table">
+    <thead><tr><th>Característica</th><th>ATS (moderno)</th><th>LTS (Legacy)</th></tr></thead>
+    <tbody>
+      <tr><td>Arquitectura</td><td>3 microservicios desacoplados</td><td>Embebido en JVM de Tomcat</td></tr>
+      <tr><td>Disponible desde</td><td>ACS v6.2 + ZIP v1.2+</td><td>Desde siempre (pre v6.0)</td></tr>
+      <tr><td>Componentes</td><td>Router :8095 · T-Engine :8090 · SharedFS :8099</td><td>Sin componentes externos</td></tr>
+      <tr><td>Recomendación</td><td><span class="badge badge-green">Producción</span></td><td><span class="badge badge-amber">Fallback / Legacy</span></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ══════════════ SLIDE 16 ══════════════ -->
+<div class="slide" data-phase="Fase 5 · Transformación">
+  <div class="phase-marker"><span class="phase-dot"></span>Fase 5 · Búsqueda y Transformación</div>
+  <div class="slide-header">
+    <span class="phase-tag">Instalación ATS</span>
+    <h2 class="slide-title">Configuración del <span>Transform Service</span></h2>
+    <div class="title-rule"></div>
+  </div>
+  <div class="bullets">
+    <div class="bullet"><div class="bullet-num">1</div><div class="bullet-text"><strong>Extracción</strong>: descomprimir <code>alfresco-transform-service-distribution-{version}.zip</code> en <code>/opt/alfresco/transform-service-{version}</code>. Definir <code>ATS_HOME</code> en <code>setenv.sh</code>.</div></div>
+    <div class="bullet"><div class="bullet-num">2</div><div class="bullet-text"><strong>3 scripts de inicio</strong>: <code>ats-shared-fs.sh</code> (Shared File Store), <code>ats-atr.sh</code> (Transform Router), <code>ats-ate-aio.sh</code> (AIO T-Engine). Cada uno registrado como servicio systemd independiente.</div></div>
+    <div class="bullet"><div class="bullet-num">3</div><div class="bullet-text"><strong>Activar en ACS</strong>: <code>local.transform.service.enabled=true</code> en <code>alfresco-global.properties</code>. Configurar hosts via <code>CATALINA_OPTS</code>: <code>-Dats-shared-fs.host=localhost -Dats-tengine-aio.host=localhost</code>.</div></div>
+    <div class="bullet"><div class="bullet-num">4</div><div class="bullet-text"><strong>Verificación</strong>: cada componente expone un endpoint <code>/transform/config</code> con JSON de capacidades de transformación. Errores de conexión al inicio son normales hasta que todos los servicios arrancan.</div></div>
+  </div>
+</div>
+
+<!-- ══════════════ SLIDE 17 ══════════════ -->
+<div class="slide" data-phase="Fase 6 · Seguridad">
+  <div class="phase-marker"><span class="phase-dot"></span>Fase 6 · Seguridad y Puesta en Marcha</div>
+  <div class="slide-header">
+    <span class="phase-tag">Hardening</span>
+    <h2 class="slide-title">Seguridad: <span>Keystores</span> y Usuario de Servicio</h2>
+    <div class="title-rule"></div>
+  </div>
+  <div class="bullets">
+    <div class="bullet"><div class="bullet-num">1</div><div class="bullet-text"><strong>Usuario no-privilegiado</strong>: crear usuario <code>alfresco</code> sin login: <code>sudo useradd -M -N -g users alfresco</code>. Todos los servicios del stack deben ejecutarse como este usuario, <em>nunca como root</em>.</div></div>
+    <div class="bullet"><div class="bullet-num">2</div><div class="bullet-text"><strong>Permisos de escritura</strong>: el usuario <code>alfresco</code> necesita permisos en los directorios de datos: <code>chown -R alfresco /var/opt/alfresco</code> y <code>/etc/opt/alfresco/search-services/solrhome</code>.</div></div>
+    <div class="bullet"><div class="bullet-num">3</div><div class="bullet-text"><strong>Keystore</strong>: ACS genera automáticamente el keystore en <code>/var/opt/alfresco/content-services/keystore</code> en el primer arranque. La ruta se define con <code>dir.keystore</code> en <code>alfresco-global.properties</code>.</div></div>
+    <div class="bullet"><div class="bullet-num">4</div><div class="bullet-text"><strong>SSL entre ACS y Solr</strong>: para producción usar <code>solr.secureComms=https</code> con certificados mutuos. En lab se simplifica a <code>none</code> para reducir complejidad durante el aprendizaje.</div></div>
+  </div>
+</div>
+
+<!-- ══════════════ SLIDE 18 ══════════════ -->
+<div class="slide" data-phase="Fase 6 · Seguridad">
+  <div class="phase-marker"><span class="phase-dot"></span>Fase 6 · Seguridad y Puesta en Marcha</div>
+  <div class="slide-header">
+    <span class="phase-tag">Performance</span>
+    <h2 class="slide-title">Tuning de <span>Tomcat</span>: Memoria y JAVA_OPTS</h2>
+    <div class="title-rule"></div>
+  </div>
+  <div class="bullets">
+    <div class="bullet"><div class="bullet-num">1</div><div class="bullet-text"><strong>Tomcat heap</strong>: en <code>tomcat.sh</code> → <code>CATALINA_OPTS="-Xms2g -Xmx2g"</code>. Igualar <code>-Xms</code> y <code>-Xmx</code> para evitar expansiones de heap en caliente. Ajustar según RAM disponible (regla: ≤50% RAM total).</div></div>
+    <div class="bullet"><div class="bullet-num">2</div><div class="bullet-text"><strong>ActiveMQ JVM</strong>: heap ligero de <code>-Xms128m -Xmx128m</code> — el broker tiene carga baja. Definir en el script de inicio de ActiveMQ o en su propio <code>setenv.sh</code>.</div></div>
+    <div class="bullet"><div class="bullet-num">3</div><div class="bullet-text"><strong>Solr JVM</strong>: configurar en <code>solr.in.sh</code> → <code>SOLR_OPTS</code>. Agregar <code>-Dsolr.content.dir=/var/opt/alfresco/search-services/contentstore</code> y parámetros de GC apropiados para el volumen de índices.</div></div>
+    <div class="bullet"><div class="bullet-num">4</div><div class="bullet-text"><code>setenv.sh</code> centraliza <em>todas</em> las variables del stack: <code>JAVA_HOME</code>, <code>TOMCAT_HOME</code>, <code>SEARCH_HOME</code>, <code>ATS_HOME</code>, etc. Un único archivo a actualizar durante upgrades futuros.</div></div>
+  </div>
+</div>
+
+<!-- ══════════════ SLIDE 19 ══════════════ -->
+<div class="slide" data-phase="Fase 6 · Puesta en Marcha">
+  <div class="phase-marker"><span class="phase-dot"></span>Fase 6 · Seguridad y Puesta en Marcha</div>
+  <div class="slide-header">
+    <span class="phase-tag">Go-Live</span>
+    <h2 class="slide-title">Secuencia de <span>Arranque</span> y Validación</h2>
+    <div class="title-rule"></div>
+  </div>
+  <div class="bullets">
+    <div class="bullet"><div class="bullet-num">1</div><div class="bullet-text"><strong>Orden de inicio</strong>: <code>PostgreSQL → ActiveMQ → Tomcat+ACS → Search Services → Transform Service</code>. Con systemd y dependencias configuradas en los unit files, el orden se gestiona automáticamente.</div></div>
+    <div class="bullet"><div class="bullet-num">2</div><div class="bullet-text"><strong>Comando único</strong>: <code>sudo systemctl start alfresco-content</code> arranca todo el stack. Verificar con <code>systemctl list-units --type=service</code> que todos los servicios aparecen como <em>loaded active</em>.</div></div>
+    <div class="bullet"><div class="bullet-num">3</div><div class="bullet-text"><strong>Análisis de logs</strong>: <code>grep "(ERROR|SEVERE|FATAL)" /var/log/alfresco/*.log</code>. Errores de conexión al ATS T-Engine al inicio son esperados (race condition); se resuelven solos cuando todos los servicios están arriba.</div></div>
+    <div class="bullet"><div class="bullet-num">4</div><div class="bullet-text"><strong>Endpoints de validación</strong>: <code>/alfresco</code> (repo), <code>/share</code> (UI), <code>/alfresco/service/enterprise/admin</code> (Admin Console), <code>:8983/solr</code> (Solr), <code>:8161</code> (ActiveMQ console).</div></div>
+  </div>
+</div>
+
+<!-- ══════════════ SLIDE 20 ══════════════ -->
+<div class="slide" data-phase="Fase 6 · Cierre">
+  <div class="phase-marker"><span class="phase-dot"></span>Fase 6 · Seguridad y Puesta en Marcha</div>
+  <div class="slide-header">
+    <span class="phase-tag">Operaciones</span>
+    <h2 class="slide-title">Buenas Prácticas, <span>Logs</span> y Troubleshooting</h2>
+    <div class="title-rule"></div>
+  </div>
+  <div class="bullets">
+    <div class="bullet"><div class="bullet-num">1</div><div class="bullet-text"><strong>setenv.sh como fuente única de verdad</strong>: centralizar todas las variables de entorno facilita upgrades — solo se actualiza la versión en una variable y todos los scripts la recogen automáticamente.</div></div>
+    <div class="bullet"><div class="bullet-num">2</div><div class="bullet-text"><strong>Logs críticos a monitorizar</strong>: <code>alfresco.log</code> (repositorio), <code>catalina.out</code> (Tomcat), <code>solr.log</code> (Search Services), <code>ats-atr.log</code> (Transform Router), <code>ats-ate-aio.log</code> (T-Engine).</div></div>
+    <div class="bullet"><div class="bullet-num">3</div><div class="bullet-text"><strong>Smoke test</strong>: subir un documento en Share → verificar preview PDF (valida ATS) → buscar texto con la barra de búsqueda (valida Solr). Si ambas funcionan, el stack está operativo.</div></div>
+    <div class="bullet"><div class="bullet-num">4</div><div class="bullet-text"><strong>No mezclar entornos</strong>: la instalación ZIP de lab/Docker no debe usarse como base de producción. Producción requiere VM/bare-metal con tuning de memoria, SSL habilitado y backups de <code>/var/opt/alfresco</code>.</div></div>
+  </div>
+</div>
+
+</div><!-- #deck -->
+
+<!-- ══════════ FOOTER ══════════ -->
+<div id="footer">
+  <span class="footer-logo">Alfresco ACS · Guía de Despliegue ZIP</span>
+  <div id="dots"></div>
+  <div class="progress-track"><div class="progress-fill" id="progress"></div></div>
+  <span id="slide-counter">1 / 20</span>
+  <button class="nav-btn" id="prev" title="Anterior">&#8592;</button>
+  <button class="nav-btn" id="next" title="Siguiente">&#8594;</button>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const total  = slides.length;
+  let cur = 0;
+
+  const dotsEl    = document.getElementById('dots');
+  const progress  = document.getElementById('progress');
+  const counter   = document.getElementById('slide-counter');
+  const prevBtn   = document.getElementById('prev');
+  const nextBtn   = document.getElementById('next');
+
+  // build dots
+  slides.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    d.addEventListener('click', () => goto(i));
+    dotsEl.appendChild(d);
+  });
+
+  function goto(n) {
+    slides[cur].classList.remove('active');
+    slides[cur].classList.add('prev');
+    setTimeout(() => slides[cur < n ? cur : n + 1]?.classList.remove('prev'), 500);
+
+    cur = n;
+    slides.forEach((s, i) => { s.className = 'slide' + (i === cur ? ' active' : ''); });
+    dotsEl.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === cur));
+    progress.style.width = ((cur + 1) / total * 100) + '%';
+    counter.textContent  = (cur + 1) + ' / ' + total;
+    prevBtn.disabled = cur === 0;
+    nextBtn.disabled = cur === total - 1;
+  }
+
+  prevBtn.addEventListener('click', () => cur > 0 && goto(cur - 1));
+  nextBtn.addEventListener('click', () => cur < total - 1 && goto(cur + 1));
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown')  { e.preventDefault(); cur < total - 1 && goto(cur + 1); }
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')    { e.preventDefault(); cur > 0           && goto(cur - 1); }
+  });
+
+  goto(0); // init
+</script>
+</body>
+</html>
